@@ -1,6 +1,7 @@
 package kigo
 
 import (
+	"fmt"
 	"io"
 	"os"
 
@@ -72,4 +73,12 @@ func (term *Terminal) ReadKey() (Key, error) {
 
 func (term *Terminal) clearEntireScreen() {
 	term.out.WriteString("\x1b[2J")
+}
+
+func (term *Terminal) moveCursor(row, col int) {
+	fmt.Fprintf(term.out, "\x1b[%d;%dH", row+1, col+1)
+}
+
+func (term *Terminal) moveCursorToHome() {
+	term.moveCursor(0, 0)
 }

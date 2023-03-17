@@ -17,6 +17,7 @@ func NewEditor() *Editor {
 
 func (editor *Editor) refreshScreen() {
 	editor.term.clearEntireScreen()
+	editor.term.moveCursorToHome()
 }
 
 func (editor *Editor) processKeypress() error {
