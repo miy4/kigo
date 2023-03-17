@@ -32,7 +32,7 @@ func (term *Terminal) EnableRawMode() error {
 	term.org = &org
 
 	raw.Iflag &^= unix.IXON
-	raw.Lflag &^= unix.ECHO | unix.ICANON | unix.ISIG
+	raw.Lflag &^= unix.ECHO | unix.ICANON | unix.IEXTEN | unix.ISIG
 
 	err = unix.IoctlSetTermios(int(term.in.Fd()), unix.TCSETSF, raw)
 	if err != nil {
