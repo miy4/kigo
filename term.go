@@ -1,7 +1,7 @@
 package kigo
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -27,19 +27,53 @@ func NewTerminal() *Terminal {
 	}
 }
 
-func getWinSize(out *os.File) (*WinSize, error) {
-	ws, err := unix.IoctlGetWinsize(int(out.Fd()), unix.TIOCGWINSZ)
+func (term *Terminal) getWinSize() (*WinSize, error) {
+	ws, err := unix.IoctlGetWinsize(int(term.out.Fd()), unix.TIOCGWINSZ)
 	if err != nil {
 		return nil, err
 	} else if ws.Col == 0 {
-		return nil, errors.New("possible errornous outcome")
+		r, c, err := term.getCursorPosition()
+		if err != nil {
+			return nil, err
+		}
+		return &WinSize{unix.Winsize{Row: r, Col: c}}, nil
 	}
 
 	return &WinSize{*ws}, nil
 }
 
+func (term *Terminal) getCursorPosition() (uint16, uint16, error) {
+	_, err := term.out.WriteString("\x1b[999C\x1b[999B\x1b[6n")
+	if err != nil {
+		return 0, 0, err
+	}
+
+	b := make([]byte, 1)
+	var buf bytes.Buffer
+	for i := 0; i < 32; i++ {
+		n, err := term.in.Read(b)
+		if n != 1 || err != nil || b[0] == 'R' {
+			break
+		}
+		buf.WriteByte(b[0])
+	}
+
+	seq := buf.Bytes()
+	if len(seq) < 2 || seq[0] != '\x1b' || seq[1] != '[' {
+		return 0, 0, fmt.Errorf("unexpected output: %s", seq)
+	}
+
+	var r, c uint16
+	_, err = fmt.Sscanf(string(seq[2:]), "%d;%d", &r, &c)
+	if err != nil {
+		return 0, 0, fmt.Errorf("unexpected output: %s", seq)
+	}
+
+	return r, c, nil
+}
+
 func (term *Terminal) init() error {
-	ws, err := getWinSize(term.out)
+	ws, err := term.getWinSize()
 	if err != nil {
 		return err
 	}
