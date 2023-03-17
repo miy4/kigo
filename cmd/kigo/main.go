@@ -1,20 +1,66 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 
 	"golang.org/x/sys/unix"
 )
 
-func enableRawMode() {
-	raw, _ := unix.IoctlGetTermios(int(os.Stdin.Fd()), unix.TCGETS)
+type Terminal struct {
+	org *unix.Termios
+	in  *os.File
+	out *os.File
+}
+
+func NewTerminal() *Terminal {
+	return &Terminal{
+		in:  os.Stdin,
+		out: os.Stdout,
+	}
+}
+
+func (term *Terminal) EnableRawMode() error {
+	raw, err := unix.IoctlGetTermios(int(term.in.Fd()), unix.TCGETS)
+	if err != nil {
+		return err
+	}
+
+	org := *raw
+	term.org = &org
+
 	raw.Lflag &^= unix.ECHO
-	unix.IoctlSetTermios(int(os.Stdin.Fd()), unix.TCSETSF, raw)
+
+	err = unix.IoctlSetTermios(int(term.in.Fd()), unix.TCSETSF, raw)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (term *Terminal) DisableRawMode() error {
+	if term.org == nil {
+		return nil
+	}
+
+	err := unix.IoctlSetTermios(int(term.in.Fd()), unix.TCSETSF, term.org)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
-	enableRawMode()
+	term := NewTerminal()
+	err := term.EnableRawMode()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error enabling raw mode: %v\n", err)
+		os.Exit(1)
+	}
+	defer term.DisableRawMode()
 
 	b := make([]byte, 1)
 	for {
@@ -23,6 +69,4 @@ func main() {
 			break
 		}
 	}
-
-	os.Exit(0)
 }
