@@ -32,6 +32,7 @@ func (term *Terminal) EnableRawMode() error {
 	term.org = &org
 
 	raw.Iflag &^= unix.IXON | unix.ICRNL
+	raw.Oflag &^= unix.OPOST
 	raw.Lflag &^= unix.ECHO | unix.ICANON | unix.IEXTEN | unix.ISIG
 
 	err = unix.IoctlSetTermios(int(term.in.Fd()), unix.TCSETSF, raw)
@@ -73,9 +74,9 @@ func main() {
 
 		r := rune(b[0])
 		if unicode.IsPrint(r) {
-			fmt.Printf("%d ('%c')\n", r, r)
+			fmt.Printf("%d ('%c')\r\n", r, r)
 		} else {
-			fmt.Printf("%d\n", r)
+			fmt.Printf("%d\r\n", r)
 		}
 	}
 }
