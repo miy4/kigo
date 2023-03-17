@@ -31,8 +31,9 @@ func (term *Terminal) EnableRawMode() error {
 	org := *raw
 	term.org = &org
 
-	raw.Iflag &^= unix.IXON | unix.ICRNL
+	raw.Iflag &^= unix.BRKINT | unix.IXON | unix.INPCK | unix.ISTRIP | unix.ICRNL
 	raw.Oflag &^= unix.OPOST
+	raw.Cflag |= unix.CS8
 	raw.Lflag &^= unix.ECHO | unix.ICANON | unix.IEXTEN | unix.ISIG
 
 	err = unix.IoctlSetTermios(int(term.in.Fd()), unix.TCSETSF, raw)
