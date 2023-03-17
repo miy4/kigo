@@ -69,3 +69,7 @@ func (term *Terminal) ReadKey() (Key, error) {
 	}
 	return Key(b[0]), nil
 }
+
+func (term *Terminal) clearEntireScreen() {
+	term.out.WriteString("\x1b[2J")
+}

@@ -15,6 +15,10 @@ func NewEditor() *Editor {
 	return &Editor{term}
 }
 
+func (editor *Editor) refreshScreen() {
+	editor.term.clearEntireScreen()
+}
+
 func (editor *Editor) processKeypress() error {
 	key, err := editor.term.ReadKey()
 	if err != nil {
@@ -36,6 +40,7 @@ func (editor *Editor) Run() error {
 	defer editor.term.DisableRawMode()
 
 	for {
+		editor.refreshScreen()
 		err := editor.processKeypress()
 		if err == Quit {
 			break
