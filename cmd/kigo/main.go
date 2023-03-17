@@ -5,6 +5,7 @@ import (
 	"os"
 	"unicode"
 
+	"github.com/miy4/kigo"
 	"golang.org/x/sys/unix"
 )
 
@@ -79,7 +80,7 @@ func main() {
 			fmt.Printf("%d\r\n", r)
 		}
 
-		if b[0] == 'q' {
+		if kigo.Key(b[0]) == kigo.KeyCtrlQ {
 			break
 		}
 	}
