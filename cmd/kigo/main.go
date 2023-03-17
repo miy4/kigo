@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"unicode"
 
@@ -35,6 +34,8 @@ func (term *Terminal) EnableRawMode() error {
 	raw.Oflag &^= unix.OPOST
 	raw.Cflag |= unix.CS8
 	raw.Lflag &^= unix.ECHO | unix.ICANON | unix.IEXTEN | unix.ISIG
+	raw.Cc[unix.VMIN] = 0
+	raw.Cc[unix.VTIME] = 1
 
 	err = unix.IoctlSetTermios(int(term.in.Fd()), unix.TCSETSF, raw)
 	if err != nil {
@@ -68,16 +69,18 @@ func main() {
 
 	b := make([]byte, 1)
 	for {
-		_, err := os.Stdin.Read(b)
-		if err == io.EOF || b[0] == 'q' {
-			break
-		}
+		b[0] = 0
+		term.in.Read(b)
 
 		r := rune(b[0])
 		if unicode.IsPrint(r) {
 			fmt.Printf("%d ('%c')\r\n", r, r)
 		} else {
 			fmt.Printf("%d\r\n", r)
+		}
+
+		if b[0] == 'q' {
+			break
 		}
 	}
 }
