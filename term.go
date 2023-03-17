@@ -82,3 +82,7 @@ func (term *Terminal) moveCursor(row, col int) {
 func (term *Terminal) moveCursorToHome() {
 	term.moveCursor(0, 0)
 }
+
+func (term *Terminal) writeString(s string) {
+	term.out.WriteString(s)
+}

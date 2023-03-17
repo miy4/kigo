@@ -15,8 +15,16 @@ func NewEditor() *Editor {
 	return &Editor{term}
 }
 
+func (editor *Editor) drawRows() {
+	for y := 0; y < 24; y++ {
+		editor.term.writeString("~\r\n")
+	}
+}
+
 func (editor *Editor) refreshScreen() {
 	editor.term.clearEntireScreen()
+	editor.term.moveCursorToHome()
+	editor.drawRows()
 	editor.term.moveCursorToHome()
 }
 
