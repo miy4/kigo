@@ -42,10 +42,14 @@ func (editor *Editor) Run() error {
 
 	for {
 		editor.refreshScreen()
-		err := editor.processKeypress()
-		if err == Quit {
-			break
-		} else if err != nil {
+		if err := editor.processKeypress(); err != nil {
+			editor.term.clearEntireScreen()
+			editor.term.moveCursorToHome()
+
+			if err == Quit {
+				break
+			}
+
 			return err
 		}
 	}
