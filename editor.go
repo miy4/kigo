@@ -15,8 +15,16 @@ func NewEditor() *Editor {
 	return &Editor{term}
 }
 
+func (editor *Editor) rows() int {
+	return int(editor.term.size.Row)
+}
+
+func (editor *Editor) cols() int {
+	return int(editor.term.size.Col)
+}
+
 func (editor *Editor) drawRows() {
-	for y := 0; y < 24; y++ {
+	for y := 0; y < editor.rows(); y++ {
 		editor.term.writeString("~\r\n")
 	}
 }
@@ -47,6 +55,10 @@ func (editor *Editor) Run() error {
 		return err
 	}
 	defer editor.term.DisableRawMode()
+
+	if err := editor.term.init(); err != nil {
+		return err
+	}
 
 	for {
 		editor.refreshScreen()

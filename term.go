@@ -1,6 +1,7 @@
 package kigo
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -9,9 +10,14 @@ import (
 )
 
 type Terminal struct {
-	org *unix.Termios
-	in  *os.File
-	out *os.File
+	org  *unix.Termios
+	in   *os.File
+	out  *os.File
+	size *WinSize
+}
+
+type WinSize struct {
+	unix.Winsize
 }
 
 func NewTerminal() *Terminal {
@@ -19,6 +25,27 @@ func NewTerminal() *Terminal {
 		in:  os.Stdin,
 		out: os.Stdout,
 	}
+}
+
+func getWinSize(out *os.File) (*WinSize, error) {
+	ws, err := unix.IoctlGetWinsize(int(out.Fd()), unix.TIOCGWINSZ)
+	if err != nil {
+		return nil, err
+	} else if ws.Col == 0 {
+		return nil, errors.New("possible errornous outcome")
+	}
+
+	return &WinSize{*ws}, nil
+}
+
+func (term *Terminal) init() error {
+	ws, err := getWinSize(term.out)
+	if err != nil {
+		return err
+	}
+
+	term.size = ws
+	return nil
 }
 
 func (term *Terminal) EnableRawMode() error {
