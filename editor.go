@@ -94,13 +94,21 @@ func (editor *Editor) processKeypress() error {
 func (editor *Editor) moveCursor(key Key) {
 	switch key {
 	case KeyLeft:
-		editor.cur.x--
+		if editor.cur.x >= 1 {
+			editor.cur.x--
+		}
 	case KeyRight:
-		editor.cur.x++
+		if editor.cur.x <= editor.cols()-2 {
+			editor.cur.x++
+		}
 	case KeyUp:
-		editor.cur.y--
+		if editor.cur.y >= 1 {
+			editor.cur.y--
+		}
 	case KeyDown:
-		editor.cur.y++
+		if editor.cur.y <= editor.rows()-2 {
+			editor.cur.y++
+		}
 	}
 }
 
