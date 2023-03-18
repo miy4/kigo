@@ -25,7 +25,10 @@ func (editor *Editor) cols() int {
 
 func (editor *Editor) drawRows() {
 	for y := 0; y < editor.rows(); y++ {
-		editor.term.writeString("~\r\n")
+		editor.term.writeString("~")
+		if y < int(editor.rows()) {
+			editor.term.writeString("\r\n")
+		}
 	}
 }
 
