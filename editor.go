@@ -33,10 +33,12 @@ func (editor *Editor) drawRows() {
 }
 
 func (editor *Editor) refreshScreen() {
+	editor.term.hideCursor()
 	editor.term.clearEntireScreen()
 	editor.term.moveCursorToHome()
 	editor.drawRows()
 	editor.term.moveCursorToHome()
+	editor.term.showCursor()
 	editor.term.flush()
 }
 

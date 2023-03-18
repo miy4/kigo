@@ -147,6 +147,14 @@ func (term *Terminal) moveCursorToHome() {
 	term.moveCursor(0, 0)
 }
 
+func (term *Terminal) hideCursor() {
+	term.buf.WriteString("\x1b[?25l")
+}
+
+func (term *Terminal) showCursor() {
+	term.buf.WriteString("\x1b[?25h")
+}
+
 func (term *Terminal) writeString(s string) {
 	term.buf.WriteString(s)
 }
