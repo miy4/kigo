@@ -139,6 +139,10 @@ func (term *Terminal) clearEntireScreen() {
 	term.buf.WriteString("\x1b[2J")
 }
 
+func (term *Terminal) clearLineRight() {
+	term.buf.WriteString("\x1b[K")
+}
+
 func (term *Terminal) moveCursor(row, col int) {
 	fmt.Fprintf(term.buf, "\x1b[%d;%dH", row+1, col+1)
 }

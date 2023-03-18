@@ -26,6 +26,7 @@ func (editor *Editor) cols() int {
 func (editor *Editor) drawRows() {
 	for y := 0; y < editor.rows(); y++ {
 		editor.term.writeString("~")
+		editor.term.clearLineRight()
 		if y < int(editor.rows()) {
 			editor.term.writeString("\r\n")
 		}
@@ -34,7 +35,6 @@ func (editor *Editor) drawRows() {
 
 func (editor *Editor) refreshScreen() {
 	editor.term.hideCursor()
-	editor.term.clearEntireScreen()
 	editor.term.moveCursorToHome()
 	editor.drawRows()
 	editor.term.moveCursorToHome()
