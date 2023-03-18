@@ -37,6 +37,7 @@ func (editor *Editor) refreshScreen() {
 	editor.term.moveCursorToHome()
 	editor.drawRows()
 	editor.term.moveCursorToHome()
+	editor.term.flush()
 }
 
 func (editor *Editor) processKeypress() error {

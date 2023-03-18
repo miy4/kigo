@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"golang.org/x/sys/unix"
 )
@@ -14,6 +15,7 @@ type Terminal struct {
 	in   *os.File
 	out  *os.File
 	size *WinSize
+	buf  *strings.Builder
 }
 
 type WinSize struct {
@@ -24,6 +26,7 @@ func NewTerminal() *Terminal {
 	return &Terminal{
 		in:  os.Stdin,
 		out: os.Stdout,
+		buf: &strings.Builder{},
 	}
 }
 
@@ -133,11 +136,11 @@ func (term *Terminal) ReadKey() (Key, error) {
 }
 
 func (term *Terminal) clearEntireScreen() {
-	term.out.WriteString("\x1b[2J")
+	term.buf.WriteString("\x1b[2J")
 }
 
 func (term *Terminal) moveCursor(row, col int) {
-	fmt.Fprintf(term.out, "\x1b[%d;%dH", row+1, col+1)
+	fmt.Fprintf(term.buf, "\x1b[%d;%dH", row+1, col+1)
 }
 
 func (term *Terminal) moveCursorToHome() {
@@ -145,5 +148,10 @@ func (term *Terminal) moveCursorToHome() {
 }
 
 func (term *Terminal) writeString(s string) {
-	term.out.WriteString(s)
+	term.buf.WriteString(s)
+}
+
+func (term *Terminal) flush() {
+	term.out.WriteString(term.buf.String())
+	term.buf.Reset()
 }
