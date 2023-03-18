@@ -12,11 +12,20 @@ var Quit = errors.New("Quit")
 
 type Editor struct {
 	term *Terminal
+	cur  *pos
+}
+
+type pos struct {
+	x int
+	y int
 }
 
 func NewEditor() *Editor {
 	term := NewTerminal()
-	return &Editor{term}
+	return &Editor{
+		term: term,
+		cur:  &pos{0, 0},
+	}
 }
 
 func (editor *Editor) rows() int {
@@ -62,7 +71,7 @@ func (editor *Editor) refreshScreen() {
 	editor.term.hideCursor()
 	editor.term.moveCursorToHome()
 	editor.drawRows()
-	editor.term.moveCursorToHome()
+	editor.term.moveCursor(editor.cur.y, editor.cur.x)
 	editor.term.showCursor()
 	editor.term.flush()
 }
@@ -76,9 +85,24 @@ func (editor *Editor) processKeypress() error {
 	switch key {
 	case KeyCtrlQ:
 		return Quit
+	case 'w', 's', 'a', 'd':
+		editor.moveCursor(key)
 	}
 
 	return nil
+}
+
+func (editor *Editor) moveCursor(key Key) {
+	switch key {
+	case 'a':
+		editor.cur.x--
+	case 'd':
+		editor.cur.x++
+	case 'w':
+		editor.cur.y--
+	case 's':
+		editor.cur.y++
+	}
 }
 
 func (editor *Editor) Run() error {
