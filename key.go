@@ -30,3 +30,10 @@ const (
 	KeyCtrlY
 	KeyCtrlZ
 )
+
+const (
+	KeyUp = Key(iota + 128)
+	KeyDown
+	KeyRight
+	KeyLeft
+)

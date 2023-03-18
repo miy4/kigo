@@ -69,7 +69,6 @@ func (editor *Editor) drawWelcome() {
 
 func (editor *Editor) refreshScreen() {
 	editor.term.hideCursor()
-	editor.term.moveCursorToHome()
 	editor.drawRows()
 	editor.term.moveCursor(editor.cur.y, editor.cur.x)
 	editor.term.showCursor()
@@ -85,7 +84,7 @@ func (editor *Editor) processKeypress() error {
 	switch key {
 	case KeyCtrlQ:
 		return Quit
-	case 'w', 's', 'a', 'd':
+	case KeyUp, KeyDown, KeyRight, KeyLeft:
 		editor.moveCursor(key)
 	}
 
@@ -94,13 +93,13 @@ func (editor *Editor) processKeypress() error {
 
 func (editor *Editor) moveCursor(key Key) {
 	switch key {
-	case 'a':
+	case KeyLeft:
 		editor.cur.x--
-	case 'd':
+	case KeyRight:
 		editor.cur.x++
-	case 'w':
+	case KeyUp:
 		editor.cur.y--
-	case 's':
+	case KeyDown:
 		editor.cur.y++
 	}
 }
@@ -118,9 +117,6 @@ func (editor *Editor) Run() error {
 	for {
 		editor.refreshScreen()
 		if err := editor.processKeypress(); err != nil {
-			editor.term.clearEntireScreen()
-			editor.term.moveCursorToHome()
-
 			if err == Quit {
 				break
 			}

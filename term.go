@@ -1,6 +1,7 @@
 package kigo
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -16,10 +17,70 @@ type Terminal struct {
 	out  *os.File
 	size *WinSize
 	buf  *strings.Builder
+	keys chan Key
+	errs chan error
 }
 
 type WinSize struct {
 	unix.Winsize
+}
+
+type keyScanner struct {
+	in   *bufio.Reader
+	keys chan Key
+	errs chan error
+}
+
+func (sc *keyScanner) scan() {
+	for {
+		b, err := sc.in.ReadByte()
+		if err != nil && err != io.EOF {
+			sc.errs <- err
+			break
+		}
+
+		if b == 0x1b {
+			if err = sc.scanTrailingSeq(); err != nil {
+				sc.errs <- err
+				break
+			}
+			continue
+		}
+		sc.keys <- Key(b)
+	}
+}
+
+func (sc *keyScanner) scanTrailingSeq() error {
+	b, err := sc.in.ReadByte()
+	if err != nil && err != io.EOF {
+		return err
+	} else if b != '[' {
+		sc.keys <- Key(0x1b)
+		sc.keys <- Key(b)
+		return nil
+	}
+
+	b, err = sc.in.ReadByte()
+	if err != nil && err != io.EOF {
+		return err
+	}
+
+	switch b {
+	case 'A': // Up:    \x1b[A
+		sc.keys <- KeyUp
+	case 'B': // Down:  \x1b[B
+		sc.keys <- KeyDown
+	case 'C': // Right: \x1b[C
+		sc.keys <- KeyRight
+	case 'D': // Left:  \x1b[D
+		sc.keys <- KeyLeft
+	default:
+		sc.keys <- Key(0x1b)
+		sc.keys <- Key('[')
+		sc.keys <- Key(b)
+	}
+
+	return nil
 }
 
 func NewTerminal() *Terminal {
@@ -82,6 +143,19 @@ func (term *Terminal) init() error {
 	}
 
 	term.size = ws
+
+	keys := make(chan Key, 1)
+	errs := make(chan error, 1)
+	term.keys = keys
+	term.errs = errs
+
+	scanner := &keyScanner{
+		in:   bufio.NewReader(term.in),
+		keys: keys,
+		errs: errs,
+	}
+	go scanner.scan()
+
 	return nil
 }
 
@@ -123,16 +197,12 @@ func (term *Terminal) DisableRawMode() error {
 }
 
 func (term *Terminal) ReadKey() (Key, error) {
-	b := make([]byte, 1)
-	for {
-		n, err := term.in.Read(b)
-		if err != nil && err != io.EOF {
-			return 0, err
-		} else if n == 1 {
-			break
-		}
+	select {
+	case key := <-term.keys:
+		return key, nil
+	case err := <-term.errs:
+		return Key(0), err
 	}
-	return Key(b[0]), nil
 }
 
 func (term *Terminal) clearEntireScreen() {
