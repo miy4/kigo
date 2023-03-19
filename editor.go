@@ -94,6 +94,10 @@ func (editor *Editor) processKeypress() error {
 		for i := editor.rows(); i > 0; i-- {
 			editor.moveCursor(dir)
 		}
+	case KeyHome:
+		editor.cur.x = 0
+	case KeyEnd:
+		editor.cur.x = editor.cols() - 1
 	}
 
 	return nil

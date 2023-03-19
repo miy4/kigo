@@ -38,6 +38,8 @@ const (
 	KeyLeft
 	KeyPgUp
 	KeyPgDn
+	KeyHome
+	KeyEnd
 )
 
 var keySeq *node
@@ -80,4 +82,12 @@ func init() {
 	keySeq.insert("\x1b[D", KeyLeft)
 	keySeq.insert("\x1b[5~", KeyPgUp)
 	keySeq.insert("\x1b[6~", KeyPgDn)
+	keySeq.insert("\x1b[1~", KeyHome)
+	keySeq.insert("\x1b[7~", KeyHome)
+	keySeq.insert("\x1b[H", KeyHome)
+	keySeq.insert("\x1bOH", KeyHome)
+	keySeq.insert("\x1b[4~", KeyEnd)
+	keySeq.insert("\x1b[8~", KeyEnd)
+	keySeq.insert("\x1b[F", KeyEnd)
+	keySeq.insert("\x1bOF", KeyEnd)
 }
