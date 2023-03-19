@@ -86,6 +86,14 @@ func (editor *Editor) processKeypress() error {
 		return Quit
 	case KeyUp, KeyDown, KeyRight, KeyLeft:
 		editor.moveCursor(key)
+	case KeyPgUp, KeyPgDn:
+		dir := KeyDown
+		if key == KeyPgUp {
+			dir = KeyUp
+		}
+		for i := editor.rows(); i > 0; i-- {
+			editor.moveCursor(dir)
+		}
 	}
 
 	return nil

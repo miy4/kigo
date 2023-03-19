@@ -3,6 +3,7 @@ package kigo
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -51,35 +52,33 @@ func (sc *keyScanner) scan() {
 }
 
 func (sc *keyScanner) scanTrailingSeq() error {
-	b, err := sc.in.ReadByte()
-	if err != nil && err != io.EOF {
-		return err
-	} else if b != '[' {
-		sc.keys <- Key(0x1b)
-		sc.keys <- Key(b)
-		return nil
+	node, ok := keySeq.children['\x1b']
+	if !ok {
+		return errors.New("missing keySeq entries with key [\\x1b]")
 	}
 
-	b, err = sc.in.ReadByte()
-	if err != nil && err != io.EOF {
-		return err
+	keys := make([]Key, 0)
+	for {
+		b, err := sc.in.ReadByte()
+		if err != nil && err != io.EOF {
+			return err
+		}
+
+		child, ok := node.children[b]
+		if !ok {
+			keys = append(node.values, Key(b))
+			break
+		} else if len(child.children) <= 0 {
+			keys = append(child.values)
+			break
+		}
+
+		node = child
 	}
 
-	switch b {
-	case 'A': // Up:    \x1b[A
-		sc.keys <- KeyUp
-	case 'B': // Down:  \x1b[B
-		sc.keys <- KeyDown
-	case 'C': // Right: \x1b[C
-		sc.keys <- KeyRight
-	case 'D': // Left:  \x1b[D
-		sc.keys <- KeyLeft
-	default:
-		sc.keys <- Key(0x1b)
-		sc.keys <- Key('[')
-		sc.keys <- Key(b)
+	for _, k := range keys {
+		sc.keys <- k
 	}
-
 	return nil
 }
 

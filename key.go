@@ -36,4 +36,48 @@ const (
 	KeyDown
 	KeyRight
 	KeyLeft
+	KeyPgUp
+	KeyPgDn
 )
+
+var keySeq *node
+
+type node struct {
+	children map[byte]*node
+	values   []Key
+}
+
+func (n *node) insert(seq string, result Key) {
+	cur := n
+	keys := make([]Key, 0)
+
+	for _, b := range []byte(seq) {
+		keys = append(keys, Key(b))
+
+		child, ok := cur.children[b]
+		if !ok {
+			child = &node{
+				children: make(map[byte]*node),
+				values:   keys,
+			}
+			cur.children[b] = child
+		}
+		cur = child
+	}
+
+	cur.values = []Key{result}
+}
+
+func init() {
+	keySeq = &node{
+		children: make(map[byte]*node),
+		values:   []Key{},
+	}
+
+	keySeq.insert("\x1b[A", KeyUp)
+	keySeq.insert("\x1b[B", KeyDown)
+	keySeq.insert("\x1b[C", KeyRight)
+	keySeq.insert("\x1b[D", KeyLeft)
+	keySeq.insert("\x1b[5~", KeyPgUp)
+	keySeq.insert("\x1b[6~", KeyPgDn)
+}
