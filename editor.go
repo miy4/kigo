@@ -1,8 +1,10 @@
 package kigo
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -10,9 +12,29 @@ const version = "0.1.0"
 
 var Quit = errors.New("Quit")
 
+type row struct {
+	chars string
+}
+
+type document struct {
+	rows []*row
+}
+
+func newDocument() *document {
+	return &document{
+		rows: []*row{},
+	}
+}
+
+func (doc *document) isEmpty() bool {
+	return len(doc.rows) == 0
+}
+
 type Editor struct {
-	term *Terminal
-	cur  *pos
+	term     *Terminal
+	cur      *pos
+	doc      *document
+	FileName string
 }
 
 type pos struct {
@@ -25,7 +47,25 @@ func NewEditor() *Editor {
 	return &Editor{
 		term: term,
 		cur:  &pos{0, 0},
+		doc:  newDocument(),
 	}
+}
+
+func (editor *Editor) open(name string) error {
+	f, err := os.Open(name)
+	if err != nil {
+		return err
+	}
+
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		editor.doc.rows = append(editor.doc.rows, &row{chars: sc.Text()})
+	}
+	if err = sc.Err(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (editor *Editor) rows() int {
@@ -36,12 +76,26 @@ func (editor *Editor) cols() int {
 	return int(editor.term.size.Col)
 }
 
+func (editor *Editor) drawRow(at int) {
+	row := editor.doc.rows[at]
+	width := editor.cols()
+	if len(row.chars) < width {
+		width = len(row.chars)
+	}
+
+	editor.term.writeString(row.chars[:width])
+}
+
 func (editor *Editor) drawRows() {
 	for y := 0; y < editor.rows(); y++ {
-		if y == editor.rows()/3 {
-			editor.drawWelcome()
+		if y < len(editor.doc.rows) {
+			editor.drawRow(y)
 		} else {
-			editor.term.writeString("~")
+			if editor.doc.isEmpty() && y == editor.rows()/3 {
+				editor.drawWelcome()
+			} else {
+				editor.term.writeString("~")
+			}
 		}
 
 		editor.term.clearLineRight()
@@ -132,6 +186,13 @@ func (editor *Editor) Run() error {
 
 	if err := editor.term.init(); err != nil {
 		return err
+	}
+
+	if editor.FileName != "" {
+		err := editor.open(editor.FileName)
+		if err != nil {
+			return err
+		}
 	}
 
 	for {
