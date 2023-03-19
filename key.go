@@ -40,6 +40,7 @@ const (
 	KeyPgDn
 	KeyHome
 	KeyEnd
+	KeyDel
 )
 
 var keySeq *node
@@ -90,4 +91,5 @@ func init() {
 	keySeq.insert("\x1b[8~", KeyEnd)
 	keySeq.insert("\x1b[F", KeyEnd)
 	keySeq.insert("\x1bOF", KeyEnd)
+	keySeq.insert("\x1b[3~", KeyDel)
 }
